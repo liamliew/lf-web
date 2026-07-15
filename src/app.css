@@ -1,0 +1,225 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+/* Google Sans Code is loaded via <link> tags in app.html (preconnect +
+   stylesheet), not a CSS @import — that lets the browser start fetching it
+   before CSS parsing even begins, and keeps this file free of any
+   assumption that the font is installed locally. */
+
+@custom-variant dark (&:is(.dark *));
+
+/* ---------------------------------------------------------------------- */
+/* LF Creative design tokens — light mode is the default (:root), dark    */
+/* mode overrides via a `.dark` class on <html> (see hooks.server.ts,     */
+/* which injects it server-side so there's no flash on load). Every       */
+/* text/muted-text/status color below was picked to clear WCAG AA         */
+/* (4.5:1) against its own background in that mode — see README for the  */
+/* full contrast notes.                                                  */
+/* ---------------------------------------------------------------------- */
+:root {
+	--lfc-bg: #ffffff;
+	--lfc-surface: #ffffff;
+	--lfc-surface-2: #f4f4f5;
+	--lfc-border: #e4e4e7;
+	--lfc-accent: #2563eb;
+	--lfc-text: #18181b;
+	--lfc-text-muted: #52525b;
+
+	--lfc-status-available: #15803d;
+	--lfc-status-checked-out: #b45309;
+	--lfc-status-lost: #b91c1c;
+	--lfc-status-under-repair: #52525b;
+
+	--font-mono: 'Google Sans Code', 'Courier New', monospace;
+
+	color-scheme: light;
+
+	/* shadcn-svelte tokens, mapped onto the LF palette so every primitive
+	   (button, card, dialog, table, ...) matches automatically */
+	--background: var(--lfc-bg);
+	--foreground: var(--lfc-text);
+
+	--card: var(--lfc-surface);
+	--card-foreground: var(--lfc-text);
+
+	--popover: var(--lfc-surface-2);
+	--popover-foreground: var(--lfc-text);
+
+	--primary: var(--lfc-accent);
+	--primary-foreground: #ffffff;
+
+	--secondary: var(--lfc-surface-2);
+	--secondary-foreground: var(--lfc-text);
+
+	--muted: var(--lfc-surface-2);
+	--muted-foreground: var(--lfc-text-muted);
+
+	--accent: var(--lfc-surface-2);
+	--accent-foreground: var(--lfc-text);
+
+	--destructive: var(--lfc-status-lost);
+	--destructive-foreground: #ffffff;
+
+	--border: var(--lfc-border);
+	--input: var(--lfc-border);
+	--ring: var(--lfc-accent);
+
+	--radius: 0.5rem;
+}
+
+.dark {
+	--lfc-bg: #0a0a0a;
+	--lfc-surface: #141414;
+	--lfc-surface-2: #1e1e1e;
+	--lfc-border: #2a2a2a;
+	--lfc-accent: #3b82f6;
+	--lfc-text: #ffffff;
+	--lfc-text-muted: #a1a1aa;
+
+	--lfc-status-available: #4ade80;
+	--lfc-status-checked-out: #f59e0b;
+	--lfc-status-lost: #ef4444;
+	--lfc-status-under-repair: #9ca3af;
+
+	color-scheme: dark;
+}
+
+@theme inline {
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
+
+	--color-primary: var(--primary);
+	--color-primary-foreground: var(--primary-foreground);
+
+	--color-secondary: var(--secondary);
+	--color-secondary-foreground: var(--secondary-foreground);
+
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+
+	--color-destructive: var(--destructive);
+	--color-destructive-foreground: var(--destructive-foreground);
+
+	--color-border: var(--border);
+	--color-input: var(--input);
+	--color-ring: var(--ring);
+
+	--color-surface: var(--lfc-surface);
+	--color-surface-2: var(--lfc-surface-2);
+
+	--color-lfc-available: var(--lfc-status-available);
+	--color-lfc-checked-out: var(--lfc-status-checked-out);
+	--color-lfc-lost: var(--lfc-status-lost);
+	--color-lfc-under-repair: var(--lfc-status-under-repair);
+
+	--font-mono: var(--font-mono);
+
+	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+	* {
+		@apply border-border;
+	}
+
+	body {
+		@apply bg-background text-foreground antialiased;
+		font-feature-settings:
+			'rlig' 1,
+			'calt' 1;
+	}
+
+	/* dense, data-forward tables */
+	table {
+		font-variant-numeric: tabular-nums;
+	}
+
+	::-webkit-scrollbar {
+		width: 10px;
+		height: 10px;
+	}
+
+	::-webkit-scrollbar-track {
+		background: var(--lfc-bg);
+	}
+
+	::-webkit-scrollbar-thumb {
+		background: var(--lfc-border);
+		border-radius: 999px;
+	}
+
+	::-webkit-scrollbar-thumb:hover {
+		background: var(--lfc-text-muted);
+	}
+}
+
+@layer utilities {
+	.font-mono-lfc {
+		font-family: var(--font-mono);
+	}
+
+	@keyframes shake {
+		10%,
+		90% {
+			transform: translateX(-1px);
+		}
+		20%,
+		80% {
+			transform: translateX(2px);
+		}
+		30%,
+		50%,
+		70% {
+			transform: translateX(-4px);
+		}
+		40%,
+		60% {
+			transform: translateX(4px);
+		}
+	}
+
+	.animate-shake {
+		animation: shake 0.5s ease-in-out;
+	}
+
+	@keyframes slide-in-left {
+		from {
+			transform: translateX(24px);
+			opacity: 0;
+		}
+		to {
+			transform: translateX(0);
+			opacity: 1;
+		}
+	}
+
+	@keyframes slide-in-right {
+		from {
+			transform: translateX(-24px);
+			opacity: 0;
+		}
+		to {
+			transform: translateX(0);
+			opacity: 1;
+		}
+	}
+
+	.animate-slide-in-left {
+		animation: slide-in-left 0.25s ease-out;
+	}
+
+	.animate-slide-in-right {
+		animation: slide-in-right 0.25s ease-out;
+	}
+}
