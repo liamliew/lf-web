@@ -69,7 +69,7 @@
 </script>
 
 <svelte:head>
-	<title>Audit — LF Inventory</title>
+	<title>Audit — Asset Manager</title>
 </svelte:head>
 
 <div class="space-y-6">

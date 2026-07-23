@@ -45,7 +45,7 @@
 		>
 			LF
 		</div>
-		<span class="text-sm font-semibold tracking-tight">LF Inventory</span>
+		<span class="text-sm font-semibold tracking-tight">Asset Manager</span>
 	</div>
 
 	<nav class="flex-1 space-y-1 overflow-y-auto px-3 py-4">

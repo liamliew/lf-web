@@ -89,7 +89,7 @@
 </script>
 
 <svelte:head>
-	<title>Containers — LF Inventory</title>
+	<title>Containers — Asset Manager</title>
 </svelte:head>
 
 <div class="space-y-4">

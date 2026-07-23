@@ -133,7 +133,7 @@
 </script>
 
 <svelte:head>
-	<title>Team — LF Inventory</title>
+	<title>Team — Asset Manager</title>
 </svelte:head>
 
 <div class="space-y-4">

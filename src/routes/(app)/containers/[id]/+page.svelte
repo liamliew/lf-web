@@ -147,7 +147,7 @@
 </script>
 
 <svelte:head>
-	<title>{container?.name ?? 'Container'} — LF Inventory</title>
+	<title>{container?.name ?? 'Container'} — Asset Manager</title>
 </svelte:head>
 
 <div class="space-y-4">

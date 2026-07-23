@@ -62,7 +62,7 @@
 					>
 						LF
 					</div>
-					<span class="text-sm font-semibold tracking-tight">LF Inventory</span>
+					<span class="text-sm font-semibold tracking-tight">Asset Manager</span>
 				</div>
 				<button
 					type="button"

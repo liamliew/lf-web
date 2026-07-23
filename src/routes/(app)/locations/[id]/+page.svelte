@@ -88,7 +88,7 @@
 </script>
 
 <svelte:head>
-	<title>{location?.name ?? 'Location'} — LF Inventory</title>
+	<title>{location?.name ?? 'Location'} — Asset Manager</title>
 </svelte:head>
 
 <div class="space-y-4">

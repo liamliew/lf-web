@@ -1,4 +1,4 @@
-# LF Inventory (lf-web)
+# Asset Manager (lf-web)
 
 A lightweight inventory management web app for LF Creative — track assets,
 containers, locations, team members, and audits. Built with SvelteKit,

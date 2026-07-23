@@ -97,7 +97,7 @@
 </script>
 
 <svelte:head>
-	<title>Activity — LF Inventory</title>
+	<title>Activity — Asset Manager</title>
 </svelte:head>
 
 <div class="space-y-4">

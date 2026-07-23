@@ -1,9 +1,9 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
-/* Google Sans Code is loaded via <link> tags in app.html (preconnect +
-   stylesheet), not a CSS @import — that lets the browser start fetching it
+/* Roboto & Roboto Mono are loaded via <link> tags in app.html (preconnect +
+   stylesheet), not a CSS @import — that lets the browser start fetching them
    before CSS parsing even begins, and keeps this file free of any
-   assumption that the font is installed locally. */
+   assumption that the fonts are installed locally. */
 
 @custom-variant dark (&:is(.dark *));
 
@@ -29,7 +29,8 @@
 	--lfc-status-lost: #b91c1c;
 	--lfc-status-under-repair: #52525b;
 
-	--font-mono: 'Google Sans Code', 'Courier New', monospace;
+	--font-sans: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+	--font-mono: 'Roboto Mono', ui-monospace, SFMono-Regular, monospace;
 
 	color-scheme: light;
 
@@ -120,6 +121,7 @@
 	--color-lfc-lost: var(--lfc-status-lost);
 	--color-lfc-under-repair: var(--lfc-status-under-repair);
 
+	--font-sans: var(--font-sans);
 	--font-mono: var(--font-mono);
 
 	--radius-sm: calc(var(--radius) - 4px);
@@ -135,6 +137,7 @@
 
 	body {
 		@apply bg-background text-foreground antialiased;
+		font-family: var(--font-sans);
 		font-feature-settings:
 			'rlig' 1,
 			'calt' 1;

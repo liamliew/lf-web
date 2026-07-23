@@ -130,7 +130,7 @@
 </script>
 
 <svelte:head>
-	<title>Audit Scanner — LF Inventory</title>
+	<title>Audit Scanner — Asset Manager</title>
 </svelte:head>
 
 <div class="space-y-4">

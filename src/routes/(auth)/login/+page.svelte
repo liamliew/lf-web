@@ -34,7 +34,7 @@
 </script>
 
 <svelte:head>
-	<title>Sign in — LF Inventory</title>
+	<title>Sign in — Asset Manager</title>
 </svelte:head>
 
 <div class="w-full max-w-sm rounded-xl border border-border bg-card p-8 shadow-xl">
@@ -44,7 +44,7 @@
 		>
 			LF
 		</div>
-		<h1 class="text-lg font-semibold tracking-tight">LF Inventory</h1>
+		<h1 class="text-lg font-semibold tracking-tight">Asset Manager</h1>
 		<p class="text-sm text-muted-foreground">Sign in to continue</p>
 	</div>
 
@@ -54,7 +54,7 @@
 			<div class="space-y-0.5">
 				<p class="text-sm font-medium text-destructive">Access Denied</p>
 				<p class="text-xs text-muted-foreground">
-					Your account is not registered in the LF Inventory system. Contact your administrator to
+					Your account is not registered in the Asset Manager system. Contact your administrator to
 					be added.
 				</p>
 			</div>

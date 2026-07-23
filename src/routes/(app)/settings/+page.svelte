@@ -169,7 +169,7 @@
 </script>
 
 <svelte:head>
-	<title>Settings — LF Inventory</title>
+	<title>Settings — Asset Manager</title>
 </svelte:head>
 
 <div class="max-w-2xl space-y-6">
