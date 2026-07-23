@@ -36,7 +36,9 @@
 	}
 </script>
 
-<aside class="hidden h-screen w-60 shrink-0 flex-col border-r border-border bg-surface md:flex">
+<aside
+	class="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-border bg-surface md:flex"
+>
 	<div class="flex h-14 items-center gap-2 border-b border-border px-4">
 		<div
 			class="flex size-7 items-center justify-center rounded-md bg-primary text-xs font-bold text-primary-foreground"

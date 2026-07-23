@@ -137,6 +137,26 @@ export async function removeAssetFromContainer(
 	});
 }
 
+export async function clearContainer(
+	containerId: string,
+	performedBy: string,
+	performedByName = ''
+): Promise<void> {
+	const { error } = await supabase
+		.from('inventory_assets')
+		.update({ container_id: null })
+		.eq('container_id', containerId);
+	if (error) throw error;
+
+	await logContainerEvent({
+		container_id: containerId,
+		event_type: 'asset_removed',
+		performed_by: performedBy,
+		performed_by_name: performedByName,
+		notes: 'Cleared all assets from container'
+	});
+}
+
 export async function commitContainerOperation(
 	containerId: string,
 	mode: 'check_in' | 'check_out',

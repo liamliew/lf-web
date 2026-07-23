@@ -15,7 +15,8 @@
 	let errorTimeout: ReturnType<typeof setTimeout> | undefined;
 	let shakeTimeout: ReturnType<typeof setTimeout> | undefined;
 
-	function expand() {
+	function expand(event?: MouseEvent) {
+		event?.stopPropagation();
 		inquiry.update((s) => ({ ...s, isExpanded: true }));
 	}
 
@@ -42,10 +43,7 @@
 		}
 	}
 
-	async function handleKeydown(event: KeyboardEvent) {
-		if (event.key !== 'Enter') return;
-		event.preventDefault();
-
+	async function performSearch() {
 		const code = $inquiry.inputValue.trim();
 		if (!code) return;
 
@@ -86,6 +84,18 @@
 			inquiry.update((s) => ({ ...s, inputValue: '' }));
 		}, 2000);
 	}
+
+	function handleKeydown(event: KeyboardEvent) {
+		if (event.key === 'Escape') {
+			event.preventDefault();
+			collapse();
+			return;
+		}
+		if (event.key === 'Enter') {
+			event.preventDefault();
+			performSearch();
+		}
+	}
 </script>
 
 <svelte:window onclick={handleWindowClick} />
@@ -111,12 +121,19 @@
 			autocomplete="off"
 			class="ml-2 min-w-0 flex-1 bg-transparent font-mono-lfc text-sm outline-none placeholder:text-muted-foreground"
 		/>
-		<span class="shrink-0 text-xs text-muted-foreground">↵</span>
+		<button
+			type="button"
+			onclick={performSearch}
+			aria-label="Submit search"
+			class="shrink-0 text-xs text-muted-foreground hover:text-foreground focus:outline-none"
+		>
+			↵
+		</button>
 	{:else}
 		<button
 			type="button"
 			onclick={expand}
-			class="flex size-full items-center justify-center"
+			class="flex size-full items-center justify-center focus:outline-none"
 			aria-label="Inquiry — look up any asset (Ctrl+K)"
 			title="Inquiry — look up any asset (Ctrl+K)"
 		>

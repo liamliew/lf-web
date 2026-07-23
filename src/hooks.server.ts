@@ -13,36 +13,33 @@ export const handle: Handle = async ({ event, resolve }) => {
 	event.locals.supabase = createSupabaseServerClient(event.cookies);
 
 	/**
-	 * `getSession()` only decodes the session from cookies — it doesn't
-	 * verify the JWT with the Auth server, so it isn't safe to trust for
-	 * authorization decisions. `getUser()` revalidates on every call. This
-	 * helper does both: cheap short-circuit when there's no session, real
-	 * verification when there is one.
+	 * `getUser()` revalidates the user with the Supabase Auth server, ensuring
+	 * data authenticity and avoiding warnings about relying on unverified cookie session state.
 	 */
 	event.locals.safeGetSession = async () => {
-		const {
-			data: { session }
-		} = await event.locals.supabase.auth.getSession();
-		if (!session) return { session: null, user: null };
-
 		const {
 			data: { user },
 			error
 		} = await event.locals.supabase.auth.getUser();
-		if (error) return { session: null, user: null };
+		if (error || !user) return { session: null, user: null };
+
+		const {
+			data: { session }
+		} = await event.locals.supabase.auth.getSession();
 
 		return { session, user };
 	};
 
-	const { session } = await event.locals.safeGetSession();
+	const { session, user } = await event.locals.safeGetSession();
 	event.locals.session = session;
+	event.locals.user = user;
 	event.locals.member = null;
 
-	if (session?.user) {
+	if (user) {
 		const { data: member } = await event.locals.supabase
 			.from('inventory_team_members')
 			.select('*')
-			.eq('supabase_auth_id', session.user.id)
+			.eq('supabase_auth_id', user.id)
 			.maybeSingle();
 		event.locals.member = member;
 	}

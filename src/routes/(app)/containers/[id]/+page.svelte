@@ -13,11 +13,13 @@
 	import ArrowLeftIcon from 'lucide-svelte/icons/arrow-left';
 	import PlusIcon from 'lucide-svelte/icons/plus';
 	import MinusIcon from 'lucide-svelte/icons/minus';
+	import Trash2Icon from 'lucide-svelte/icons/trash-2';
 	import {
 		getContainer,
 		getContainerEvents,
 		addAssetToContainer,
 		removeAssetFromContainer,
+		clearContainer,
 		commitContainerOperation
 	} from '$services/containerService';
 	import { getAssets } from '$services/assetService';
@@ -40,6 +42,9 @@
 	let addDialogOpen = $state(false);
 	let availableAssets = $state<Asset[]>([]);
 	let assetToAdd = $state<string | undefined>(undefined);
+
+	let clearDialogOpen = $state(false);
+	let clearing = $state(false);
 
 	let checkModalOpen = $state(false);
 	let checkMode = $state<'check_in' | 'check_out'>('check_in');
@@ -97,6 +102,21 @@
 		);
 		await load();
 		notify.success('Asset removed from container');
+	}
+
+	async function handleClearContainer() {
+		if (!$currentUser || !container) return;
+		clearing = true;
+		try {
+			await clearContainer(container.id, $currentUser.employeeId, $currentUser.employeeName);
+			await load();
+			clearDialogOpen = false;
+			notify.success('All assets removed from container');
+		} catch (err) {
+			notify.error('Failed to clear container', err instanceof Error ? err.message : undefined);
+		} finally {
+			clearing = false;
+		}
 	}
 
 	function openCheckModal(mode: 'check_in' | 'check_out') {
@@ -166,10 +186,21 @@
 			<div class="space-y-3 lg:col-span-2">
 				<div class="flex items-center justify-between">
 					<h2 class="text-sm font-semibold">Assets in this container ({assets.length})</h2>
-					<Button variant="outline" size="sm" onclick={openAddDialog}>
-						<PlusIcon class="size-4" />
-						Add Asset
-					</Button>
+					<div class="flex items-center gap-2">
+						<Button variant="outline" size="sm" onclick={openAddDialog}>
+							<PlusIcon class="size-4" />
+							Add Asset
+						</Button>
+						<Button
+							variant="destructive"
+							size="sm"
+							disabled={assets.length === 0}
+							onclick={() => (clearDialogOpen = true)}
+						>
+							<Trash2Icon class="size-4" />
+							Clear Container
+						</Button>
+					</div>
 				</div>
 
 				{#if assets.length === 0}
@@ -260,6 +291,26 @@
 		<Dialog.Footer>
 			<Button variant="outline" onclick={() => (checkModalOpen = false)}>Cancel</Button>
 			<Button onclick={confirmCheck}>Confirm</Button>
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root>
+
+<Dialog.Root bind:open={clearDialogOpen}>
+	<Dialog.Content>
+		<Dialog.Header>
+			<Dialog.Title>Clear Container?</Dialog.Title>
+			<Dialog.Description class="pt-2 text-sm text-muted-foreground">
+				Are you sure you want to remove all {assets.length}
+				{assets.length === 1 ? 'asset' : 'assets'} from
+				<span class="font-medium text-foreground">{container?.name}</span>? This will unassign them
+				from this container.
+			</Dialog.Description>
+		</Dialog.Header>
+		<Dialog.Footer class="mt-4">
+			<Button variant="outline" onclick={() => (clearDialogOpen = false)}>Cancel</Button>
+			<Button variant="destructive" onclick={handleClearContainer} disabled={clearing}>
+				{clearing ? 'Clearing…' : 'Clear Container'}
+			</Button>
 		</Dialog.Footer>
 	</Dialog.Content>
 </Dialog.Root>

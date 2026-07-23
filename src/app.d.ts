@@ -10,6 +10,7 @@ declare global {
 			supabase: SupabaseClient;
 			safeGetSession: () => Promise<{ session: Session | null; user: User | null }>;
 			session: Session | null;
+			user: User | null;
 			/** The inventory_team_members row linked to the OAuth user, if any. */
 			member: TeamMember | null;
 		}
