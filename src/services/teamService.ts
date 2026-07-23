@@ -47,11 +47,15 @@ export async function deleteTeamMember(id: string): Promise<void> {
 }
 
 export async function getAssetsCheckedOutCount(memberId: string): Promise<number> {
-	const { count, error } = await supabase
-		.from('inventory_assets')
-		.select('*', { count: 'exact', head: true })
-		.eq('current_user_id', memberId)
-		.eq('status', 'checked_out');
-	if (error) throw error;
-	return count ?? 0;
+	try {
+		const { count, error } = await supabase
+			.from('inventory_assets')
+			.select('*', { count: 'exact', head: true })
+			.eq('current_user_id', memberId)
+			.eq('status', 'checked_out');
+		if (error) return 0;
+		return count ?? 0;
+	} catch {
+		return 0;
+	}
 }

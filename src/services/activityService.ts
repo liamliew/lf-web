@@ -1,5 +1,10 @@
 import { supabase } from '$lib/supabase';
-import type { AssetEventType, ContainerEventType } from '$lib/types';
+import type {
+	AssetEventType,
+	ContainerEvent,
+	ContainerEventType,
+	InventoryEvent
+} from '$lib/types';
 
 /**
  * Asset activity (inventory_events) and container activity
@@ -72,17 +77,27 @@ export async function getGlobalActivity(
 		containerQuery = containerQuery.eq('event_type', filters.eventType);
 	}
 
-	// Container events have no asset_id column, so an asset-scoped query
-	// can never match one — skip that fetch entirely in that case.
-	const [assetResult, containerResult] = await Promise.all([
-		assetQuery,
-		filters.assetId ? Promise.resolve({ data: [], error: null }) : containerQuery
-	]);
+	let assetData: InventoryEvent[] = [];
+	try {
+		const res = await assetQuery;
+		if (res.data) assetData = res.data;
+		if (res.error) console.error('Error fetching asset events:', res.error);
+	} catch (err) {
+		console.error('Error fetching asset events:', err);
+	}
 
-	if (assetResult.error) throw assetResult.error;
-	if (containerResult.error) throw containerResult.error;
+	let containerData: ContainerEvent[] = [];
+	if (!filters.assetId) {
+		try {
+			const res = await containerQuery;
+			if (res.data) containerData = res.data;
+			if (res.error) console.error('Error fetching container events:', res.error);
+		} catch (err) {
+			console.error('Error fetching container events:', err);
+		}
+	}
 
-	const assetEvents: ActivityFeedItem[] = (assetResult.data ?? []).map((e) => ({
+	const assetEvents: ActivityFeedItem[] = assetData.map((e) => ({
 		id: e.id,
 		source: 'asset' as const,
 		event_type: e.event_type,
@@ -99,7 +114,7 @@ export async function getGlobalActivity(
 		created_at: e.created_at
 	}));
 
-	const containerEvents: ActivityFeedItem[] = (containerResult.data ?? []).map((e) => ({
+	const containerEvents: ActivityFeedItem[] = containerData.map((e) => ({
 		id: e.id,
 		source: 'container' as const,
 		event_type: e.event_type,

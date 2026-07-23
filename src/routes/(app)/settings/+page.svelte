@@ -46,9 +46,9 @@
 		if (!isAdmin) return;
 		try {
 			const [assets, containers, locs] = await Promise.all([
-				getAssets(),
-				getContainers(),
-				getLocations()
+				getAssets().catch(() => []),
+				getContainers().catch(() => []),
+				getLocations().catch(() => [])
 			]);
 			systemInfo = {
 				totalAssets: assets.length,

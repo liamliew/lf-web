@@ -59,7 +59,7 @@
 			const counts: Record<string, number> = {};
 			await Promise.all(
 				members.map(async (member) => {
-					counts[member.id] = await getAssetsCheckedOutCount(member.id);
+					counts[member.id] = await getAssetsCheckedOutCount(member.id).catch(() => 0);
 				})
 			);
 			checkedOutCounts = counts;
