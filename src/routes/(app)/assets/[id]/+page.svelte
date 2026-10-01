@@ -17,9 +17,10 @@
 	import PencilIcon from 'lucide-svelte/icons/pencil';
 	import ExternalLinkIcon from 'lucide-svelte/icons/external-link';
 	import PackageIcon from 'lucide-svelte/icons/package';
-	import { getAsset, updateAsset } from '$services/assetService';
+	import { getAsset, renameAssetId, updateAsset } from '$services/assetService';
 	import { removeAssetFromContainer } from '$services/containerService';
-	import { getLocations } from '$services/locationService';
+	import { getLocationForContainerAsset, getLocations } from '$services/locationService';
+	import { indexLocations, locationPath } from '$lib/locationHierarchy';
 	import { notify } from '$stores/toast';
 	import { currentUser } from '$stores/auth';
 	import { formatDate } from '$lib/utils';
@@ -38,6 +39,13 @@
 	let container = $state<Container | null>(null);
 	let events = $state<InventoryEvent[]>([]);
 	let locations = $state<Location[]>([]);
+	/** The container location this asset represents, if it's a container. */
+	let containerLocation = $state<Location | null>(null);
+
+	let renameOpen = $state(false);
+	let renameConfirmOpen = $state(false);
+	let newAssetId = $state('');
+	let renameError = $state('');
 
 	let editing = $state(false);
 	let form = $state({
@@ -67,6 +75,7 @@
 			}
 			asset = result;
 			assetLocation = result.location;
+			containerLocation = await getLocationForContainerAsset(result.asset_id).catch(() => null);
 			container = result.container;
 			events = result.events;
 			form = {
@@ -162,6 +171,45 @@
 		notify.success('Removed from container');
 	}
 
+	function openRename() {
+		if (!asset) return;
+		newAssetId = asset.asset_id;
+		renameError = '';
+		renameOpen = true;
+	}
+
+	function requestRename(event: SubmitEvent) {
+		event.preventDefault();
+		if (!asset) return;
+		if (!newAssetId.trim()) {
+			renameError = "ID can't be blank";
+			return;
+		}
+		if (newAssetId.trim() === asset.asset_id) {
+			renameOpen = false;
+			return;
+		}
+		renameConfirmOpen = true;
+	}
+
+	async function confirmRename() {
+		if (!asset || !$currentUser) return;
+		try {
+			const renamed = await renameAssetId(asset.asset_id, newAssetId, {
+				id: $currentUser.employeeId,
+				name: $currentUser.employeeName
+			});
+			renameOpen = false;
+			notify.success('Asset ID changed');
+			await goto(resolve('/(app)/assets/[id]', { id: renamed }), { replaceState: true });
+			await load();
+		} catch (err) {
+			renameError = err instanceof Error ? err.message : 'Failed to change ID';
+		}
+	}
+
+	const locationsById = $derived(indexLocations(locations));
+
 	const osmLink = $derived(
 		asset?.last_known_lat && asset?.last_known_lng
 			? `https://www.openstreetmap.org/?mlat=${asset.last_known_lat}&mlon=${asset.last_known_lng}#map=16/${asset.last_known_lat}/${asset.last_known_lng}`
@@ -197,6 +245,13 @@
 			<div class="flex items-center gap-3">
 				<StatusBadge status={asset.status} />
 				<span class="font-mono-lfc text-xs text-muted-foreground">{asset.asset_id}</span>
+				<button
+					type="button"
+					onclick={openRename}
+					class="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+				>
+					Change ID
+				</button>
 			</div>
 			<span class="text-xs text-muted-foreground">
 				Last seen {asset.last_known_at ? formatDate(asset.last_known_at) : 'never'}
@@ -332,8 +387,28 @@
 					<CardContent class="space-y-2 text-sm">
 						<div class="flex items-center justify-between">
 							<span class="text-muted-foreground">Assigned location</span>
-							<span>{assetLocation?.name ?? '—'}</span>
+							{#if assetLocation}
+								<a
+									href={resolve('/(app)/locations/[id]', { id: assetLocation.id })}
+									class="text-right font-medium hover:underline"
+								>
+									{locationPath(assetLocation.id, locationsById) || assetLocation.name}
+								</a>
+							{:else}
+								<span>—</span>
+							{/if}
 						</div>
+						{#if containerLocation}
+							<div class="flex items-center justify-between">
+								<span class="text-muted-foreground">This asset is a container</span>
+								<a
+									href={resolve('/(app)/locations/[id]', { id: containerLocation.id })}
+									class="text-primary hover:underline"
+								>
+									View contents ({containerLocation.code})
+								</a>
+							</div>
+						{/if}
 						{#if osmLink}
 							<!-- eslint-disable svelte/no-navigation-without-resolve -- external OpenStreetMap URL, not an internal route -->
 							<a
@@ -394,6 +469,44 @@
 		</div>
 	{/if}
 </div>
+
+<Dialog.Root bind:open={renameOpen}>
+	<Dialog.Content class="sm:max-w-sm">
+		<Dialog.Header>
+			<Dialog.Title>Change Asset ID</Dialog.Title>
+			<Dialog.Description>
+				History, audits, jobs and container links follow the asset automatically.
+			</Dialog.Description>
+		</Dialog.Header>
+		<form onsubmit={requestRename} class="space-y-3">
+			<div class="space-y-1.5">
+				<Label for="new-asset-id">New ID</Label>
+				<Input
+					id="new-asset-id"
+					bind:value={newAssetId}
+					class="font-mono-lfc"
+					oninput={() => (renameError = '')}
+				/>
+				{#if renameError}
+					<p class="text-xs text-destructive">{renameError}</p>
+				{/if}
+			</div>
+			<Dialog.Footer>
+				<Button type="button" variant="outline" onclick={() => (renameOpen = false)}>Cancel</Button>
+				<Button type="submit">Continue</Button>
+			</Dialog.Footer>
+		</form>
+	</Dialog.Content>
+</Dialog.Root>
+
+<ConfirmDialog
+	bind:open={renameConfirmOpen}
+	title="Change this asset's ID?"
+	description={`"${asset?.asset_id}" → "${newAssetId.trim()}". Labels printed with the old ID will no longer scan — reprint the tag.`}
+	confirmLabel="Change ID"
+	destructive
+	onConfirm={confirmRename}
+/>
 
 <ConfirmDialog
 	bind:open={markLostOpen}

@@ -1,5 +1,6 @@
 import { supabase } from '$lib/supabase';
 import type { Asset, Container, CreateAssetInput, InventoryEvent, Location } from '$lib/types';
+import { checkCodeAvailable } from '$services/codeService';
 
 export interface AssetFilters {
 	status?: string;
@@ -66,6 +67,9 @@ export async function getAsset(
 }
 
 export async function createAsset(data: CreateAssetInput): Promise<Asset> {
+	const codeError = await checkCodeAvailable(data.asset_id);
+	if (codeError) throw new Error(codeError);
+
 	const { data: asset, error } = await supabase
 		.from('inventory_assets')
 		.insert({ status: 'available', ...data })
@@ -91,6 +95,43 @@ export async function updateAsset(assetId: string, data: Partial<Asset>): Promis
 		.single();
 	if (error) throw error;
 	return asset;
+}
+
+/**
+ * asset_id is the PK of inventory_assets, so this is a literal PK rename.
+ * Every FK into it (inventory_events, inventory_audit_items,
+ * inventory_job_assets, inventory_locations.linked_asset_id, ...) has
+ * ON UPDATE CASCADE — see the add_on_update_cascade_for_asset_id_fks
+ * migration — so this one write is the whole operation, same as lf-scan's
+ * renameAssetId. The uniqueness check spans the whole code space (assets,
+ * locations, containers) so a printed tag never resolves to two things.
+ */
+export async function renameAssetId(
+	oldId: string,
+	newId: string,
+	performer: { id: string; name: string }
+): Promise<string> {
+	const trimmed = newId.trim();
+	if (trimmed === oldId) return oldId;
+
+	const codeError = await checkCodeAvailable(trimmed, { kind: 'asset', assetId: oldId });
+	if (codeError) throw new Error(codeError);
+
+	const { error } = await supabase
+		.from('inventory_assets')
+		.update({ asset_id: trimmed, updated_at: new Date().toISOString() })
+		.eq('asset_id', oldId);
+	if (error) throw error;
+
+	await supabase.from('inventory_events').insert({
+		asset_id: trimmed,
+		event_type: 'edited',
+		performed_by: performer.id,
+		performed_by_name: performer.name,
+		note: `ID changed from ${oldId} to ${trimmed}`
+	});
+
+	return trimmed;
 }
 
 export async function deleteAsset(assetId: string): Promise<void> {

@@ -4,34 +4,40 @@
 	import { resolve } from '$app/paths';
 	import { Button } from '$components/ui/button';
 	import { Input } from '$components/ui/input';
-	import { Label } from '$components/ui/label';
-	import { Textarea } from '$components/ui/textarea';
-	import { Card, CardContent, CardHeader, CardTitle } from '$components/ui/card';
-	import * as Dialog from '$components/ui/dialog';
 	import EmptyState from '$components/shared/EmptyState.svelte';
 	import LoadingSkeleton from '$components/shared/LoadingSkeleton.svelte';
+	import LocationFormDialog from '$components/locations/LocationFormDialog.svelte';
 	import PlusIcon from 'lucide-svelte/icons/plus';
 	import MapPinIcon from 'lucide-svelte/icons/map-pin';
-	import { getLocations, createLocation } from '$services/locationService';
+	import BoxIcon from 'lucide-svelte/icons/box';
+	import CornerDownRightIcon from 'lucide-svelte/icons/corner-down-right';
+	import { getLocations } from '$services/locationService';
 	import { getAssets } from '$services/assetService';
+	import { flattenTree } from '$lib/locationHierarchy';
 	import { notify } from '$stores/toast';
 	import type { Location } from '$lib/types';
 
 	let loading = $state(true);
 	let locations = $state<Location[]>([]);
 	let assetCounts = $state<Record<string, number>>({});
-
+	let search = $state('');
 	let dialogOpen = $state(false);
-	let name = $state('');
-	let locationCode = $state('');
-	let description = $state('');
-	let submitting = $state(false);
+
+	const tree = $derived(flattenTree(locations));
+	const visibleRows = $derived.by(() => {
+		const q = search.trim().toLowerCase();
+		if (!q) return tree;
+		return tree.filter(
+			({ location }) =>
+				location.name.toLowerCase().includes(q) || location.code.toLowerCase().includes(q)
+		);
+	});
 
 	async function load() {
 		loading = true;
 		try {
-			locations = await getLocations();
-			const assets = await getAssets();
+			const [locs, assets] = await Promise.all([getLocations(), getAssets()]);
+			locations = locs;
 			const counts: Record<string, number> = {};
 			for (const asset of assets) {
 				if (asset.current_location_id) {
@@ -47,29 +53,6 @@
 	}
 
 	onMount(load);
-
-	async function handleCreate(event: SubmitEvent) {
-		event.preventDefault();
-		if (!name.trim()) return;
-		submitting = true;
-		try {
-			const location = await createLocation({
-				name: name.trim(),
-				location_code: locationCode.trim() || undefined,
-				description: description.trim() || undefined
-			});
-			locations = [...locations, location];
-			notify.success('Location created');
-			name = '';
-			locationCode = '';
-			description = '';
-			dialogOpen = false;
-		} catch (err) {
-			notify.error('Failed to create location', err instanceof Error ? err.message : undefined);
-		} finally {
-			submitting = false;
-		}
-	}
 </script>
 
 <svelte:head>
@@ -77,12 +60,15 @@
 </svelte:head>
 
 <div class="space-y-4">
-	<div class="flex items-center justify-between">
+	<div class="flex flex-wrap items-center justify-between gap-2">
 		<h1 class="text-lg font-semibold tracking-tight">Locations</h1>
-		<Button onclick={() => (dialogOpen = true)}>
-			<PlusIcon class="size-4" />
-			Add Location
-		</Button>
+		<div class="flex gap-2">
+			<Input bind:value={search} placeholder="Search name or code…" class="w-56" />
+			<Button onclick={() => (dialogOpen = true)}>
+				<PlusIcon class="size-4" />
+				Add Location
+			</Button>
+		</div>
 	</div>
 
 	{#if loading}
@@ -94,61 +80,44 @@
 			description="Add your first location to start assigning assets."
 		/>
 	{:else}
-		<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-			{#each locations as location (location.id)}
+		<div class="border border-border bg-card">
+			<div
+				class="grid grid-cols-[1fr_auto_auto] gap-4 border-b border-border px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground"
+			>
+				<span>Location</span>
+				<span>Code</span>
+				<span class="w-20 text-right">Assets</span>
+			</div>
+			{#each visibleRows as { location, depth } (location.id)}
 				<button
 					type="button"
-					class="text-left"
+					class="grid w-full grid-cols-[1fr_auto_auto] items-center gap-4 border-b border-border px-4 py-2.5 text-left text-sm last:border-b-0 hover:bg-accent"
 					onclick={() => goto(resolve('/(app)/locations/[id]', { id: location.id }))}
 				>
-					<Card class="h-full transition-colors hover:border-primary/50">
-						<CardHeader>
-							<div class="flex items-center justify-between">
-								<CardTitle class="text-base">{location.name}</CardTitle>
-								{#if location.location_code}
-									<span class="font-mono-lfc text-xs text-muted-foreground"
-										>{location.location_code}</span
-									>
-								{/if}
-							</div>
-						</CardHeader>
-						<CardContent class="space-y-2">
-							<p class="text-sm text-muted-foreground">
-								{location.description ?? 'No description'}
-							</p>
-							<p class="text-sm font-medium">{assetCounts[location.id] ?? 0} assets</p>
-						</CardContent>
-					</Card>
+					<span
+						class="flex min-w-0 items-center gap-2"
+						style={`padding-left: ${search ? 0 : depth * 1.25}rem`}
+					>
+						{#if depth > 0 && !search}
+							<CornerDownRightIcon class="size-3.5 shrink-0 text-muted-foreground" />
+						{/if}
+						{#if location.linked_asset_id}
+							<BoxIcon class="size-4 shrink-0 text-primary" aria-label="Container" />
+						{:else}
+							<MapPinIcon class="size-4 shrink-0 text-muted-foreground" />
+						{/if}
+						<span class="truncate font-medium">{location.name}</span>
+					</span>
+					<span class="font-mono-lfc text-xs text-muted-foreground">{location.code}</span>
+					<span class="w-20 text-right tabular-nums">{assetCounts[location.id] ?? 0}</span>
 				</button>
 			{/each}
 		</div>
 	{/if}
 </div>
 
-<Dialog.Root bind:open={dialogOpen}>
-	<Dialog.Content>
-		<Dialog.Header>
-			<Dialog.Title>Add Location</Dialog.Title>
-		</Dialog.Header>
-		<form onsubmit={handleCreate} class="space-y-4">
-			<div class="grid grid-cols-2 gap-3">
-				<div class="space-y-1.5">
-					<Label for="loc-name">Name</Label>
-					<Input id="loc-name" bind:value={name} placeholder="Main Warehouse" required />
-				</div>
-				<div class="space-y-1.5">
-					<Label for="loc-code">Code</Label>
-					<Input id="loc-code" bind:value={locationCode} placeholder="WH-01" />
-				</div>
-			</div>
-			<div class="space-y-1.5">
-				<Label for="loc-description">Description</Label>
-				<Textarea id="loc-description" bind:value={description} rows={3} />
-			</div>
-			<Dialog.Footer>
-				<Button type="button" variant="outline" onclick={() => (dialogOpen = false)}>Cancel</Button>
-				<Button type="submit" disabled={submitting}>{submitting ? 'Creating…' : 'Create'}</Button>
-			</Dialog.Footer>
-		</form>
-	</Dialog.Content>
-</Dialog.Root>
+<LocationFormDialog
+	bind:open={dialogOpen}
+	{locations}
+	onSaved={(saved) => goto(resolve('/(app)/locations/[id]', { id: saved.id }))}
+/>

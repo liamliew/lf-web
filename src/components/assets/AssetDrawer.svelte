@@ -10,6 +10,7 @@
 	import { createAsset, generateUniqueAssetId } from '$services/assetService';
 	import { notify } from '$stores/toast';
 	import type { Asset, CostTier, Location, SizeTier } from '$lib/types';
+	import { ASSET_CATEGORIES } from '$lib/constants';
 
 	let {
 		open = $bindable(false),
@@ -21,7 +22,7 @@
 		onCreated?: (asset: Asset) => void;
 	} = $props();
 
-	const CATEGORIES = ['Camera', 'Lens', 'Lighting', 'Audio', 'Support', 'Bag', 'Storage', 'Other'];
+	const CATEGORIES = ASSET_CATEGORIES;
 	const SIZES: SizeTier[] = ['S', 'M', 'L'];
 	const COSTS: CostTier[] = ['Low', 'Med', 'High'];
 

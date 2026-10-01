@@ -82,11 +82,12 @@
 	}
 
 	async function addLocation() {
-		if (!newLocationName.trim() || !newLocationCode.trim()) return;
+		if (!newLocationName.trim()) return;
 		try {
 			const location = await createLocation({
 				name: newLocationName.trim(),
-				location_code: newLocationCode.trim() || undefined
+				// Blank code → the DB assigns a LOC-XXXXXXXX default.
+				code: newLocationCode.trim() || undefined
 			});
 			locations = [...locations, location];
 			newLocationName = '';
@@ -279,17 +280,13 @@
 					{#each locations as location (location.id)}
 						<li class="flex items-center justify-between py-2 text-sm">
 							<span>{location.name}</span>
-							{#if location.location_code}
-								<span class="font-mono-lfc text-xs text-muted-foreground"
-									>{location.location_code}</span
-								>
-							{/if}
+							<span class="font-mono-lfc text-xs text-muted-foreground">{location.code}</span>
 						</li>
 					{/each}
 				</ul>
 				<div class="flex gap-2">
 					<Input bind:value={newLocationName} placeholder="Name" class="max-w-40" />
-					<Input bind:value={newLocationCode} placeholder="Code" class="max-w-28" />
+					<Input bind:value={newLocationCode} placeholder="Code (optional)" class="max-w-36" />
 					<Button variant="outline" onclick={addLocation}>
 						<PlusIcon class="size-4" />
 						Add
