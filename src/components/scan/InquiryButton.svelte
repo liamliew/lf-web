@@ -1,19 +1,12 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { resolve } from '$app/paths';
 	import SearchIcon from 'lucide-svelte/icons/search';
 	import { inquiry } from '$stores/inquiry';
 	import { scanPanel } from '$stores/scanPanel';
-	import { supabase } from '$lib/supabase';
-	import { soundManager } from '$lib/soundManager';
+	import { inquiryResults } from '$stores/inquiryResults';
 	import { cn } from '$lib/utils';
 
 	let containerEl = $state<HTMLDivElement | undefined>();
 	let inputEl = $state<HTMLInputElement | null>(null);
-	let errorMessage = $state('');
-	let shake = $state(false);
-	let errorTimeout: ReturnType<typeof setTimeout> | undefined;
-	let shakeTimeout: ReturnType<typeof setTimeout> | undefined;
 
 	function expand(event?: MouseEvent) {
 		event?.stopPropagation();
@@ -22,10 +15,6 @@
 
 	function collapse() {
 		inquiry.set({ isExpanded: false, inputValue: '' });
-		errorMessage = '';
-		clearTimeout(errorTimeout);
-		clearTimeout(shakeTimeout);
-		shake = false;
 	}
 
 	// Focus follows isExpanded regardless of what set it — a local click or
@@ -43,46 +32,13 @@
 		}
 	}
 
-	async function performSearch() {
+	// Results open as floating Inquiry windows (see InquiryResultStack) rather
+	// than navigating away, so a run of lookups can stack up side by side.
+	function performSearch() {
 		const code = $inquiry.inputValue.trim();
 		if (!code) return;
-
-		const { data: asset } = await supabase
-			.from('inventory_assets')
-			.select('asset_id')
-			.eq('asset_id', code)
-			.maybeSingle();
-
-		if (asset) {
-			await goto(resolve('/(app)/assets/[id]', { id: asset.asset_id }));
-			collapse();
-			return;
-		}
-
-		const { data: container } = await supabase
-			.from('inventory_containers')
-			.select('id')
-			.eq('container_id', code)
-			.maybeSingle();
-
-		if (container) {
-			await goto(resolve('/(app)/containers/[id]', { id: container.id }));
-			collapse();
-			return;
-		}
-
-		// Not found
-		soundManager.unknownScan();
-		errorMessage = `No asset or container found for code '${code}'`;
-		shake = true;
-		clearTimeout(shakeTimeout);
-		shakeTimeout = setTimeout(() => (shake = false), 500);
-
-		clearTimeout(errorTimeout);
-		errorTimeout = setTimeout(() => {
-			errorMessage = '';
-			inquiry.update((s) => ({ ...s, inputValue: '' }));
-		}, 2000);
+		void inquiryResults.lookup(code);
+		inquiry.update((s) => ({ ...s, inputValue: '' }));
 	}
 
 	function handleKeydown(event: KeyboardEvent) {
@@ -103,9 +59,8 @@
 <div
 	bind:this={containerEl}
 	class={cn(
-		'fixed bottom-6 right-6 z-50 flex items-center overflow-hidden rounded-full border transition-all duration-300 ease-in-out',
+		'fixed bottom-6 right-6 z-50 flex items-center overflow-hidden border transition-all duration-300 ease-in-out',
 		$scanPanel.isOpen && 'md:right-[444px]',
-		shake && 'animate-shake',
 		$inquiry.isExpanded
 			? 'h-12 w-[280px] justify-start border-primary bg-popover px-3'
 			: 'h-[52px] w-[52px] justify-center border-border bg-surface-2'
@@ -117,7 +72,7 @@
 			bind:this={inputEl}
 			bind:value={$inquiry.inputValue}
 			onkeydown={handleKeydown}
-			placeholder="Scan or enter asset code..."
+			placeholder="Scan or enter any code…"
 			autocomplete="off"
 			class="ml-2 min-w-0 flex-1 bg-transparent font-mono-lfc text-sm outline-none placeholder:text-muted-foreground"
 		/>
@@ -134,21 +89,10 @@
 			type="button"
 			onclick={expand}
 			class="flex size-full items-center justify-center focus:outline-none"
-			aria-label="Inquiry — look up any asset (Ctrl+K)"
-			title="Inquiry — look up any asset (Ctrl+K)"
+			aria-label="Inquiry — look up any asset, location or container (Ctrl+K)"
+			title="Inquiry — look up any asset, location or container (Ctrl+K)"
 		>
 			<SearchIcon class="size-5 text-muted-foreground" />
 		</button>
 	{/if}
 </div>
-
-{#if errorMessage}
-	<p
-		class={cn(
-			'fixed bottom-[76px] right-6 z-50 max-w-[280px] rounded-md bg-destructive px-3 py-1.5 text-xs text-destructive-foreground shadow-lg',
-			$scanPanel.isOpen && 'md:right-[444px]'
-		)}
-	>
-		{errorMessage}
-	</p>
-{/if}

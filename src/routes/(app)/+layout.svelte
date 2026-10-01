@@ -5,11 +5,15 @@
 	import MobileNav from '$components/layout/MobileNav.svelte';
 	import ScanPanel from '$components/scan/ScanPanel.svelte';
 	import InquiryButton from '$components/scan/InquiryButton.svelte';
+	import InquiryResultStack from '$components/scan/InquiryResultStack.svelte';
 	import { Toaster } from '$components/ui/sonner';
 	import { currentUser } from '$stores/auth';
 	import { theme } from '$stores/theme';
 	import { scanPanel } from '$stores/scanPanel';
 	import { inquiry } from '$stores/inquiry';
+	import { inquiryResults } from '$stores/inquiryResults';
+	import { attachHardwareScanner } from '$lib/hardwareScanner';
+	import { processScannedCode } from '$lib/scanProcessor';
 	import type { LayoutProps } from './$types';
 
 	let { data, children }: LayoutProps = $props();
@@ -24,6 +28,17 @@
 
 	onMount(() => {
 		theme.init();
+
+		// Inquiry is always on: a hardware-scanner burst anywhere in the app
+		// opens a floating result window — unless a batch scan session is
+		// open, in which case the scan belongs to that session instead.
+		return attachHardwareScanner((code) => {
+			if ($scanPanel.isOpen) {
+				void processScannedCode(code);
+			} else {
+				void inquiryResults.lookup(code);
+			}
+		});
 	});
 
 	/**
@@ -74,5 +89,6 @@
 
 <ScanPanel member={scanMember} />
 <InquiryButton />
+<InquiryResultStack />
 
 <Toaster />
