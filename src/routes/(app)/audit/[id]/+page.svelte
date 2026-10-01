@@ -154,9 +154,9 @@
 					Complete Audit
 				</Button>
 			</div>
-			<div class="mt-3 h-1.5 w-full rounded-full bg-muted">
+			<div class="mt-3 h-1.5 w-full bg-muted">
 				<div
-					class="h-1.5 rounded-full bg-primary"
+					class="h-1.5 bg-primary"
 					style={`width: ${total > 0 ? Math.round((scannedCount / total) * 100) : 0}%`}
 				></div>
 			</div>

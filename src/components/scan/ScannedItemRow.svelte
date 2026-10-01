@@ -19,7 +19,6 @@
 	} = $props();
 
 	const code = $derived(item.asset?.asset_id ?? item.container?.container_id ?? item.rawCode);
-	const truncatedCode = $derived(code.length > 4 ? `${code.slice(0, 4)}..` : code);
 
 	const title = $derived(
 		item.isUnknown ? 'Unknown Item' : (item.asset?.name ?? item.container?.name ?? '')
@@ -75,7 +74,7 @@
 
 	<div class="min-w-0 flex-1 px-3 py-2.5">
 		<div class="flex items-start justify-between gap-2">
-			<span class="shrink-0 font-mono-lfc text-lg font-bold" title={code}>{truncatedCode}</span>
+			<span class="max-w-[60%] break-all font-mono-lfc text-lg font-bold">{code}</span>
 			<div class="min-w-0 flex-1 text-right">
 				<p class={cn('truncate text-sm font-medium', item.isUnknown && 'text-lfc-lost')}>
 					{title}

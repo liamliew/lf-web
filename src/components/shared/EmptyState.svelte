@@ -17,7 +17,7 @@
 
 <div class="flex flex-col items-center justify-center gap-3 py-16 text-center">
 	{#if Icon}
-		<div class="flex size-12 items-center justify-center rounded-full bg-muted">
+		<div class="flex size-12 items-center justify-center bg-muted">
 			<Icon class="size-6 text-muted-foreground" />
 		</div>
 	{/if}
