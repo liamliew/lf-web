@@ -67,6 +67,7 @@ export interface Asset {
 	last_known_lng: number | null;
 	last_known_address: string | null;
 	last_known_at: string | null;
+	expected_return_date: string | null;
 }
 
 export type CreateAssetInput = Pick<Asset, 'asset_id' | 'name' | 'category'> &
@@ -96,16 +97,26 @@ export interface Container {
 export type CreateContainerInput = Pick<Container, 'container_id' | 'name'> &
 	Partial<Pick<Container, 'description' | 'current_location_id' | 'status'>>;
 
+/**
+ * `code` is the scannable/printed identifier — unique, required, same code
+ * space as `inventory_assets.asset_id` (new rows default to a "LOC-XXXXXXXX"
+ * value server-side). `parent_id` is free-form nesting: any location can
+ * parent any other, no fixed levels. A location with a non-null
+ * `linked_asset_id` IS a container — every container location is also an
+ * asset row (mandatory, no separate flag), matching lf-scan.
+ */
 export interface Location {
 	id: string;
 	name: string;
 	description: string;
-	location_code: string | null;
+	code: string;
+	parent_id: string | null;
+	linked_asset_id: string | null;
 	created_at: string;
 }
 
 export type CreateLocationInput = Pick<Location, 'name'> &
-	Partial<Pick<Location, 'description' | 'location_code'>>;
+	Partial<Pick<Location, 'description' | 'code' | 'parent_id'>>;
 
 /** Asset activity — created/checkout/checkin/location/repair/lost/etc. */
 export interface InventoryEvent {

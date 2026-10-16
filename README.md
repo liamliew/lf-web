@@ -178,6 +178,32 @@ login method.
 - Employee accounts (`inventory_team_members`) are shared — the same PIN and
   password work on both lf-scan and lf-web.
 
+## Locations, containers and codes (parity with lf-scan)
+
+- **Codes are one namespace.** Asset IDs (`inventory_assets.asset_id`),
+  location codes (`inventory_locations.code`) and legacy container codes
+  (`inventory_containers.container_id`) are all scannable tags, so a code may
+  only belong to one thing. `src/services/codeService.ts` resolves a scanned
+  code (assets → locations → legacy containers, same order as lf-scan) and
+  rejects any create/rename that would collide.
+- **Hierarchy.** `parent_id` is free-form: any location can sit under any
+  other. `src/lib/locationHierarchy.ts` builds paths/trees and stops a
+  location being moved under its own descendant.
+- **Containers are locations with a linked asset.** A container is an
+  `inventory_locations` row whose `linked_asset_id` points at an
+  `inventory_assets` row — mandatory, created in the same save (asset first,
+  rolled back if the location write fails), matching lf-scan.
+- **Renaming IDs.** Changing an asset ID is a single UPDATE; every FK into
+  `inventory_assets(asset_id)` has `ON UPDATE CASCADE`. Location codes are
+  changed from the Edit Location dialog. Both ask for confirmation, since old
+  printed tags stop scanning.
+- **Inquiry is always on.** A hardware (keyboard-wedge) scanner burst
+  anywhere in the app opens a floating result window — or feeds the batch
+  scan panel when it's open. Results stack, refresh on re-scan, and
+  auto-dismiss (hover to hold). Locations and containers show their direct
+  contents. See `src/lib/hardwareScanner.ts` and
+  `src/stores/inquiryResults.ts`.
+
 ## Appearance: light/dark theme
 
 The app supports light and dark mode, saved per-employee to their account —

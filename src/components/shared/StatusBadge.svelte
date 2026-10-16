@@ -52,12 +52,12 @@
 
 <span
 	class={cn(
-		'inline-flex w-fit items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium',
+		'inline-flex w-fit items-center gap-1.5 px-2 py-0.5 text-xs font-medium',
 		c.bg,
 		c.text,
 		className
 	)}
 >
-	<span class={cn('size-1.5 rounded-full', c.dot)}></span>
+	<span class={cn('size-1.5', c.dot)}></span>
 	{c.label}
 </span>

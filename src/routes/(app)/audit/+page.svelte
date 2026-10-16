@@ -104,11 +104,8 @@
 									<p class="text-xs text-muted-foreground">
 										Started {formatDate(audit.started_at)}
 									</p>
-									<div class="h-1.5 w-full rounded-full bg-muted">
-										<div
-											class="h-1.5 rounded-full bg-primary"
-											style={`width: ${progress(audit)}%`}
-										></div>
+									<div class="h-1.5 w-full bg-muted">
+										<div class="h-1.5 bg-primary" style={`width: ${progress(audit)}%`}></div>
 									</div>
 									<div class="flex justify-between text-xs text-muted-foreground">
 										<span>{audit.total_matched} matched</span>

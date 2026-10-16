@@ -220,7 +220,7 @@
 	type="button"
 	onclick={() => scanPanel.toggle()}
 	class={cn(
-		'fixed bottom-[84px] right-6 z-50 flex size-[52px] items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-[right] hover:brightness-110',
+		'fixed bottom-[84px] right-6 z-50 flex size-[52px] items-center justify-center bg-primary text-primary-foreground shadow-lg transition-[right] hover:brightness-110',
 		$scanPanel.isOpen && 'md:right-[444px]'
 	)}
 	aria-label="Toggle scan session (Ctrl+Shift+S)"
@@ -229,7 +229,7 @@
 	<ScanIcon class="size-6" />
 	{#if $scannedCount > 0}
 		<span
-			class="absolute -right-1 -top-1 flex size-5 animate-pulse items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white"
+			class="absolute -right-1 -top-1 flex size-5 animate-pulse items-center justify-center bg-amber-500 text-[10px] font-bold text-white"
 		>
 			{$scannedCount}
 		</span>
